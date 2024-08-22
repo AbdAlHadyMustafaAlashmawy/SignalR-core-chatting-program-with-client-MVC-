@@ -1,0 +1,367 @@
+﻿@using System.Security.Claims
+@model List<Conversation>
+<script>
+    name = '@User.Claims.FirstOrDefault(x => x.Type==ClaimTypes.Name).Value';
+    USERID = '@User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value';
+
+    document.write(`
+        <h1 style="text-align: center; margin-top: 50px;">
+            <div style="
+                color: #ff66b2;
+                background-color: #e0f7fa;
+                display: inline-block;
+                padding: 20px 30px;
+                border-radius: 15px;
+                font-family: 'Comic Sans MS', cursive;
+                font-size: 2.5em;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+                ${name}
+            </div>
+        </h1>
+    `);
+</script>
+
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5; /* Light gray background */
+    margin: 0;
+    padding: 20px;
+  }
+
+    .button-container {
+        display: flex;
+        justify-content: space-between; /* Adjust spacing as needed */
+    }
+
+  h1 {
+    color: #3498db; /* Blue heading */
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .chat-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+
+  .message-input {
+    display: flex;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  input[type="button"] {
+    padding: 10px;
+    background-color: #3498db; /* Blue button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+    /* Container for chat messages */
+    ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        /* Spacing for list items */
+        ul li {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px; /* Spacing between messages */
+            position: relative;
+            margin-bottom: 10px; /* Additional spacing between messages */
+        }
+
+    /* Optionally, adjust the margin on other elements if needed */
+    .button-container input[type="button"] {
+        margin-right: 10px; /* Spacing between buttons */
+    }
+
+    .message-input input[type="text"] {
+        margin-right: 10px; /* Spacing between input fields */
+    }
+
+    input[type="button"]:hover {
+      background-color: #2980b9; /* Darker blue on hover */
+    }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+    li.sent .status {
+      color: #3498db; /* Blue for sent messages */
+    }
+
+    li.pending .status {
+      color: #ffc107; /* Orange for pending messages */
+    }
+
+  .timestamp {
+    font-size: 12px;
+    color: #6c757d;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .status {
+    font-size: 12px;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+
+  }
+
+    .chat {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .message {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        margin: 5px 0;
+        max-width: 70%; /* Adjust the max width to your preference */
+        border-radius: 10px;
+    }
+
+    .sender {
+        background-color: blue;
+        color: white;
+        align-self: flex-start;
+        margin-left: 0;
+    }
+
+    .receiver {
+        background-color: gray;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .timestamp {
+        font-size: 0.8em;
+        color: lightgray;
+        margin-left: 10px;
+    }
+
+</style>
+
+<script>
+  // Your existing SignalR connection and message handling scripts go here
+</script>
+<p id="PT"></p>
+
+<div class="button-container">
+<label>Message : </label>
+    <input type="text" id="txt" onkeypress="typingMessage()" />
+<label>Group : </label>
+<input type="text" id="gtxt" />
+    <input type="button" value="join group" id="join" onclick="join()" />
+    <input type="button" value="Send Message to all groups" id="send" onclick="send()" />
+    <input type="button" value="Send to group" id="sendtogroup" onclick="sendtogroup()" />
+@*     <input type="button" value="Is The User Online" id="IsOnlineUser" onclick="IsOnlineUser()" />
+ *@
+</div>
+<br />
+<br />
+<ul id="ul" class="chat">
+    @{
+        foreach (var item in Model)
+        {
+            if (item.Kind == kind.AllGroups&&!item.Deleted)
+            {
+
+                if (item.IsSender==Context.User.Claims.FirstOrDefault(x=>x.Type==ClaimTypes.NameIdentifier).Value)
+                {
+                        <li class="message sender" data-message-id="@item.id">
+                            <span>@item.Name : @item.Message</span>
+                            <span class="timestamp">@item.time.ToString("dd/MMMM/yyyy : hh/mm")</span>
+                            <button class="remove-message">Remove</button> 
+
+                        </li>
+                }
+                else
+                {
+                    <li class="message receiver" data-message-id="@item.id">
+                            <span>@item.Name : @item.Message</span>
+                            <span class="timestamp">@item.time.ToString("dd/MMMM/yyyy : hh/mm")</span>
+                        </li>
+                }
+            }
+            else if(item.Kind == kind.SpecificGroup&&!item.Deleted)
+            {
+                if (item.IsSender == Context.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value)
+                {
+
+                    <p><b>
+
+                        <li class="message sender" data-message-id="@item.id">
+                            <span>@item.Name (  @item.Gname  ) : @item.Message</span>
+                            <span class="timestamp">@item.time.ToString("dd/MMMM/yyyy : hh/mm")
+                        </span>
+                            <button class="remove-message">Remove</button>
+                            
+
+                        </li>
+                            </b></p>
+                }
+                else
+                {
+                    <li class="message receiver" data-message-id="@item.id">
+                            <span>@item.Name (  @item.Gname  ) : @item.Message</span>
+                            <span class="timestamp">@item.time.ToString("dd/MMMM/yyyy : hh/mm")</span>
+                        </li>
+                }
+            }
+
+        }
+            
+    
+  }
+</ul>
+
+
+@section Scripts{
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+
+        var conn = new signalR.HubConnectionBuilder().withUrl("/chat").build();
+        conn.start();
+        conn.on("gmessage", function (n, m, g, d, isSender, messageId) {
+            var messageType = isSender ? "sender" : "receiver";
+            var messageHtml = `
+                <b><p> <li class="message ${messageType}" data-message-id="${messageId}"">
+                <span><i>${n} (${g}) : ${m}</i></span>
+                <span class="timestamp">${d}</span>
+                ${isSender ? '<button class="remove-message">Remove</button>' : ''}
+                </li></b></p>`;
+            $("#ul").append(messageHtml);
+        });
+
+
+        conn.on("sendNewMessage", function (n, m, d, isSender, messageId) {
+            var messageType = isSender ? "sender" : "receiver";
+            var messageHtml = `
+                <li class="message ${messageType}" data-message-id="${messageId}">
+                    <span>${n} : ${m}</span>
+                    <span class="timestamp">${d}</span>
+                    ${isSender ? '<button class="remove-message">Remove</button>' : ''}
+                </li>`;
+
+            $("#ul").append(messageHtml);
+        });
+
+        $("#ul").on("click", ".remove-message", function () {
+            var messageId = $(this).closest("li").data("message-id"); 
+            conn.invoke("DeleteMessage", messageId) 
+                .catch(function (err) {
+                    console.error("Error invoking DeleteMessage: ", err);
+                });
+            $(this).closest("li").remove(); 
+        });
+        conn.on("newMember", function (n, g, d) {
+            $("#ul").append(
+                "<p><li><i>" +
+                "<span style='color: blue;'>" + n + "</span> " +
+                "joined " +
+                "<span style='color: green;'>" + g + "</span> " +
+                "group " +
+                "<span style='color: red;'>" + d + "</span>" +
+                "</i></li></p>"
+            );
+        });
+
+        conn.on("removeMessageSR", function (messageId) {
+            $("#ul").find(`li[data-message-id='${messageId}']`).remove();
+        });
+
+        // conn.on("sendClientState", function (o) {
+        //     $("#ul").append("<li>" + "   " + n + " : " + m + "                    " + d + " " + o + "</li>");
+        // });
+
+        function join() {
+            var group = $("#gtxt").val();
+            conn.invoke("joinGroup", name, group);
+        }
+
+        function send() {
+            var message = $("#txt").val();
+            conn.invoke("sendMessage",name, message);
+        }
+        function typingMessage() {
+            conn.invoke("someoneTypingMessage", name)
+                .catch(function (err) {
+                    console.error("Error invoking someoneTypingMessage: ", err);
+                });
+        }
+
+        function sendtogroup() {
+            var message = $("#txt").val();
+            var group = $("#gtxt").val();
+            conn.invoke("sendMessagetogroup", name, group, message);
+        }
+        // function IsOnlineUser() {
+        //     conn.invoke("isOnline", USERID).catch(function (err) {
+        //         console.error("Error invoking isOnline: ", err);
+        //     });
+        // }
+
+        let typingTimer;
+        const typingInterval = 1000;
+        const ptElement = document.getElementById("PT");
+        function typing(n) {
+            ptElement.textContent = `${n} is typing...`;
+            ptElement.style.color = "green";
+
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(stopTyping, typingInterval);
+        }
+            conn.on("someBodyTypingMessage", function (n) {
+                console.log(`${n} is typing...`);
+                typing(n);
+            });
+        function stopTyping() {
+            ptElement.textContent = "";
+        }
+
+       
+
+
+    </script>
+}
